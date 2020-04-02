@@ -16,7 +16,7 @@
         </h1>
 
         <v-row class="justify-content-center">
-          <v-col class="col-4">
+          <v-col class="col">
             <v-text-field
                 id="issuer"
                 name="issuer"
@@ -26,26 +26,37 @@
                 id="maximum_supply"
                 name="maximum_supply"
                 label="maximum supply"
-                type="number"
               ></v-text-field>
           </v-col>
-          <v-col class="col-4">
+          <v-col class="col">
             <v-text-field
                 id="getBlock"
                 name="getBlock"
                 label="block #"
               ></v-text-field>
           </v-col>
+          <v-col class="col">
+            <v-text-field
+                id="getAccount"
+                name="getAccount"
+                label="Account Name"
+              ></v-text-field>
+          </v-col>
         </v-row>
         <v-row class="justify-content-center">
-          <v-col class="col-4">
+          <v-col class="col">
             <b-button @click="create_issuer()" variant="primary" class="w-100 mt-3">
               Create Account
             </b-button>
           </v-col>
-          <v-col class="col-4">
+          <v-col class="col">
             <b-button @click="get_block()" variant="primary" class="w-100 mt-3">
               Get Block
+            </b-button>
+          </v-col>
+          <v-col class="col">
+            <b-button @click="get_account()" variant="primary" class="w-100 mt-3">
+              Get Account
             </b-button>
           </v-col>
         </v-row>
@@ -59,13 +70,13 @@
   const { JsSignatureProvider } = require('eosjs/dist/eosjs-jssig'); // development only
   const fetch = require('node-fetch'); // node only; not needed in browsers
 
+  // 5JvLodQJeoyQ2JhrMFaykcMs4BQx2ZGzhYnRG4pyRNosCiWQ21P
   const defaultPrivateKey = "5KQwrPbwdL6PhXujxW37FSSQZ1JiwsST4cqQzDeyXtP79zkvFD3"; // eosio.token
   const signatureProvider = new JsSignatureProvider([defaultPrivateKey]);
   const { TextEncoder, TextDecoder } = require('text-encoding');  // React Native, IE11, and Edge Browsers only
 
   const rpc = new JsonRpc('http://127.0.0.1:8888', { fetch });
   const api = new Api({ rpc, signatureProvider, textDecoder: new TextDecoder(), textEncoder: new TextEncoder() });
-
 
   export default {
     name: 'Home',
@@ -81,7 +92,7 @@
     methods: {
       create_issuer: async () => {
         try {
-          await api.transact({
+          const result = await api.transact({
             actions: [{
               account: 'eosio.token',
               name: 'create',
@@ -103,7 +114,8 @@
             document.getElementById("maximum_supply").value = '';
           });
 
-          // console.log(result);
+          console.log(result);
+          result;
         } catch(e) {
           if (e instanceof RpcError)
             console.log(e.json.error.details[0].message);
@@ -112,7 +124,38 @@
           }
         }
       },
+      user_greet: async () => {
+        try {
+          const result = await api.transact({
+            actions: [{
+              account: 'eosio.token',
+              name: 'hi',
+              authorization: [{
+                actor: 'user2',
+                permission: 'active',
+              }],
+              data: {
+                user: "user2",
+                // maximum_supply: document.getElementById("maximum_supply").value,
+              },
+            }]
+          }, {
+            blocksBehind: 3,
+            expireSeconds: 30,
+          });
 
+          console.log(result);
+          result;
+        } catch(e) {
+          if (e instanceof RpcError)
+            console.log(e.json.error.details[0].message);
+        }
+      },
+      get_account: async () => {
+        const input = document.getElementById("getAccount").value;
+        console.log(await rpc.get_account(input));
+        document.getElementById("getAccount").value = '';
+      },
       get_block: async () => {
         const input = document.getElementById("getBlock").value;
         console.log(await rpc.get_block(input));
